@@ -1,0 +1,46 @@
+name: Takachiho Ticket Monitor
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python packages
+        run: |
+          pip install requests playwright
+
+      - name: Install Playwright browser
+        run: |
+          playwright install --with-deps chromium
+
+      - name: Run Takachiho monitor
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: |
+          python monitor.py
+
+      - name: Upload debug files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: takachiho-debug
+          path: |
+            takachiho_debug.html
+            takachiho_debug.png
+          if-no-files-found: ignore
